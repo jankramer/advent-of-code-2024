@@ -1,19 +1,8 @@
-fn main() {
-    let input = parse(include_str!("input.txt"));
-    let test = parse(
-        "3   4
-4   3
-2   5
-1   3
-3   9
-3   3",
-    );
+const INPUT: &str = include_str!("day01.txt");
 
-    assert_eq!(solve_a(test.clone()), 11);
-    println!("Part A: {}", solve_a(input.clone()));
-
-    assert_eq!(solve_b(test), 31);
-    println!("Part B: {}", solve_b(input));
+pub fn run() {
+    println!("Part A: {}", solve_a(parse(INPUT)));
+    println!("Part B: {}", solve_b(parse(INPUT)));
 }
 
 fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
@@ -42,4 +31,28 @@ fn solve_b((left, right): (Vec<usize>, Vec<usize>)) -> usize {
     left.into_iter()
         .map(|x| x * right.iter().filter(|y| **y == x).count())
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EXAMPLE: &str = r#"3   4
+4   3
+2   5
+1   3
+3   9
+3   3"#;
+
+    #[test]
+    fn part_a() {
+        assert_eq!(solve_a(parse(EXAMPLE)), 11);
+        assert_eq!(solve_a(parse(INPUT)), 2378066);
+    }
+
+    #[test]
+    fn part_b() {
+        assert_eq!(solve_b(parse(EXAMPLE)), 31);
+        assert_eq!(solve_b(parse(INPUT)), 18934359);
+    }
 }
