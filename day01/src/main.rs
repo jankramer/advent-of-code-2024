@@ -1,16 +1,45 @@
 fn main() {
-    let input = include_str!("input.txt");
-    let result_a = solve_a(input);
-    println!("Part A: {result_a}");
+    let input = parse(include_str!("input.txt"));
+    let test = parse(
+        "3   4
+4   3
+2   5
+1   3
+3   9
+3   3",
+    );
 
-    let result_b = solve_b(input);
-    println!("Part B: {result_b}");
+    assert_eq!(solve_a(test.clone()), 11);
+    println!("Part A: {}", solve_a(input.clone()));
+
+    assert_eq!(solve_b(test), 31);
+    println!("Part B: {}", solve_b(input));
 }
 
-fn solve_a(input: &'static str) -> usize {
-    0
+fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
+    let mut left = vec![];
+    let mut right = vec![];
+
+    for (a, b) in input.lines().map(|l| l.split_once("   ").unwrap()) {
+        left.push(a.parse().unwrap());
+        right.push(b.parse().unwrap());
+    }
+
+    (left, right)
 }
 
-fn solve_b(input: &'static str) -> usize {
-    0
+fn solve_a((mut left, mut right): (Vec<usize>, Vec<usize>)) -> usize {
+    left.sort_unstable();
+    right.sort_unstable();
+
+    left.into_iter()
+        .zip(right)
+        .map(|(l, r)| l.abs_diff(r))
+        .sum()
+}
+
+fn solve_b((left, right): (Vec<usize>, Vec<usize>)) -> usize {
+    left.into_iter()
+        .map(|x| x * right.iter().filter(|y| **y == x).count())
+        .sum()
 }
