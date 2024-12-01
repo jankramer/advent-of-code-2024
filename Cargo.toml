@@ -1,2 +1,10 @@
 [package]
 name = "advent-of-code-2024"
+edition = "2021"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "day01"
+harness = false

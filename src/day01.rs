@@ -1,11 +1,11 @@
-const INPUT: &str = include_str!("day01.txt");
+pub const INPUT: &str = include_str!("day01.txt");
 
 pub fn run() {
     println!("Part A: {}", solve_a(parse(INPUT)));
     println!("Part B: {}", solve_b(parse(INPUT)));
 }
 
-fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
+pub fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut left = vec![];
     let mut right = vec![];
 
@@ -17,7 +17,7 @@ fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
     (left, right)
 }
 
-fn solve_a((mut left, mut right): (Vec<usize>, Vec<usize>)) -> usize {
+pub fn solve_a((mut left, mut right): (Vec<usize>, Vec<usize>)) -> usize {
     left.sort_unstable();
     right.sort_unstable();
 
@@ -27,7 +27,7 @@ fn solve_a((mut left, mut right): (Vec<usize>, Vec<usize>)) -> usize {
         .sum()
 }
 
-fn solve_b((left, right): (Vec<usize>, Vec<usize>)) -> usize {
+pub fn solve_b((left, right): (Vec<usize>, Vec<usize>)) -> usize {
     left.into_iter()
         .map(|x| x * right.iter().filter(|y| **y == x).count())
         .sum()
