@@ -1,36 +1,49 @@
 pub const INPUT: &str = include_str!("day01.txt");
+type Input = [[usize; 1000]; 2];
 
 pub fn run() {
-    println!("Part A: {}", solve_a(parse(INPUT)));
-    println!("Part B: {}", solve_b(parse(INPUT)));
+    let input = parse(INPUT);
+    println!("Part A: {}", solve_a(&input));
+    println!("Part B: {}", solve_b(&input));
 }
 
-pub fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
-    let mut left = vec![];
-    let mut right = vec![];
+pub fn parse(input: &str) -> Input {
+    let mut left = [0; 1000];
+    let mut right = [0; 1000];
 
-    for (a, b) in input.lines().map(|l| l.split_once("   ").unwrap()) {
-        left.push(a.parse().unwrap());
-        right.push(b.parse().unwrap());
+    let mut iterator = input.split_whitespace().map(|x| x.parse().unwrap());
+
+    for i in 0..1000 {
+        left[i] = iterator.next().unwrap_or_default();
+        right[i] = iterator.next().unwrap_or_default();
     }
 
-    (left, right)
-}
-
-pub fn solve_a((mut left, mut right): (Vec<usize>, Vec<usize>)) -> usize {
     left.sort_unstable();
     right.sort_unstable();
 
-    left.into_iter()
-        .zip(right)
-        .map(|(l, r)| l.abs_diff(r))
+    [left, right]
+}
+
+pub fn solve_a(input: &Input) -> usize {
+    input[0]
+        .iter()
+        .zip(input[1])
+        .map(|(x, y)| x.abs_diff(y))
         .sum()
 }
 
-pub fn solve_b((left, right): (Vec<usize>, Vec<usize>)) -> usize {
-    left.into_iter()
-        .map(|x| x * right.iter().filter(|y| **y == x).count())
-        .sum()
+pub fn solve_b(input: &Input) -> usize {
+    let mut right: [usize; 99999] = [0; 99999];
+    for x in input[1] {
+        right[x] += 1;
+    }
+
+    let mut result = 0;
+    for x in input[0] {
+        result += x * right[x];
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -46,13 +59,13 @@ mod tests {
 
     #[test]
     fn part_a() {
-        assert_eq!(solve_a(parse(EXAMPLE)), 11);
-        assert_eq!(solve_a(parse(INPUT)), 2378066);
+        assert_eq!(solve_a(&parse(EXAMPLE)), 11);
+        assert_eq!(solve_a(&parse(INPUT)), 2378066);
     }
 
     #[test]
     fn part_b() {
-        assert_eq!(solve_b(parse(EXAMPLE)), 31);
-        assert_eq!(solve_b(parse(INPUT)), 18934359);
+        assert_eq!(solve_b(&parse(EXAMPLE)), 31);
+        assert_eq!(solve_b(&parse(INPUT)), 18934359);
     }
 }
