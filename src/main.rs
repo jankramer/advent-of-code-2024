@@ -1,6 +1,7 @@
 mod day01;
 mod day02;
 mod day03;
+mod day04;
 
 fn main() {
     println!("Day 01\n======");
@@ -16,5 +17,10 @@ fn main() {
     println!("Day 03\n======");
     let now = std::time::Instant::now();
     day03::run();
+    println!("{}µs\n", now.elapsed().as_micros());
+
+    println!("Day 04\n======");
+    let now = std::time::Instant::now();
+    day04::run();
     println!("{}µs\n", now.elapsed().as_micros());
 }
