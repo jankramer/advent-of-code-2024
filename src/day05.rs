@@ -1,4 +1,5 @@
-use std::collections::BTreeSet;
+use std::cmp::Ordering;
+use std::collections::HashSet;
 
 pub const INPUT: &str = include_str!("day05.txt");
 
@@ -28,7 +29,7 @@ pub fn solve_b(input: &[Update]) -> usize {
 pub fn parse(input: &str) -> Vec<Update> {
     let (rules, updates) = input.split_once("\n\n").unwrap();
 
-    let rules: Vec<_> = rules
+    let rules: HashSet<(usize, usize)> = rules
         .lines()
         .map(|l| l.split_once('|').unwrap())
         .map(|(l, r)| (l.parse().unwrap(), r.parse().unwrap()))
@@ -48,25 +49,15 @@ pub fn parse(input: &str) -> Vec<Update> {
         .collect()
 }
 
-fn sort(numbers: &[usize], rules: &[(usize, usize)]) -> Vec<usize> {
-    let mut rules: Vec<&(usize, usize)> = rules
-        .iter()
-        .filter(|(a, b)| numbers.contains(a) && numbers.contains(b))
-        .collect();
+fn sort(numbers: &[usize], rules: &HashSet<(usize, usize)>) -> Vec<usize> {
+    let mut numbers: Vec<_> = numbers.iter().cloned().collect();
 
-    let mut list = vec![];
-    let mut xs: BTreeSet<usize> = rules.iter().flat_map(|(a, b)| vec![*a, *b]).collect();
+    numbers.sort_by(|a, b| match rules.contains(&(*a, *b)) {
+        true => Ordering::Less,
+        false => Ordering::Greater,
+    });
 
-    while !xs.is_empty() {
-        let rights: BTreeSet<_> = rules.iter().map(|(_, b)| *b).collect();
-        let leftmost = *xs.difference(&rights).next().unwrap();
-
-        list.push(leftmost);
-        rules.retain(|(a, _)| a != &leftmost);
-        xs.remove(&leftmost);
-    }
-
-    list
+    numbers
 }
 
 pub struct Update {
