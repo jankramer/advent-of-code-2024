@@ -1,63 +1,73 @@
+use rayon::prelude::*;
+
 const IN: &str = include_str!("day07.txt");
 
 fn run(input: &str) -> (i64, i64) {
-    let (mut p1, mut p2) = (0, 0);
+    let lines = input.lines().collect::<Vec<_>>();
+    lines
+        .into_par_iter()
+        .map(|line| {
+            let (ans, nums) = line.split_once(": ").unwrap();
+            let ans: i64 = ans.parse().unwrap();
+            let xs: Vec<_> = nums
+                .split_whitespace()
+                .map(|x| x.parse::<i64>().unwrap())
+                .collect();
 
-    for line in input.lines() {
-        let (ans, nums) = line.split_once(": ").unwrap();
-        let ans: i64 = ans.parse().unwrap();
-        let xs: Vec<_> = nums
-            .split_whitespace()
-            .map(|x| x.parse::<i64>().unwrap())
-            .collect();
+            let mut q = vec![(xs[0], true)];
+            for x in &xs[1..xs.len() - 1] {
+                let mut new_q = vec![];
+                for (y, is_p1) in q {
+                    (y + x <= ans).then(|| new_q.push((y + x, is_p1)));
+                    (y * x <= ans).then(|| new_q.push((y * x, is_p1)));
+                    (poor_mans_concat(y, *x) <= ans)
+                        .then(|| new_q.push((poor_mans_concat(y, *x), false)));
+                }
+                q = new_q;
+            }
 
-        let mut ys_p1 = vec![xs[0]];
-        let mut ys_p2 = vec![xs[0]];
-        for x in xs.into_iter().skip(1) {
-            let mut ys_p1_new = vec![];
-            let mut ys_p2_new = vec![];
-
-            for y in ys_p1 {
-                if x + y <= ans {
-                    ys_p1_new.push(x + y);
+            let x = xs[xs.len() - 1];
+            let mut is_p2 = false;
+            for (y, is_p1) in q {
+                if y + x == ans {
+                    is_p2 = true;
+                    if is_p1 {
+                        return (ans, ans);
+                    }
                 }
 
-                if x * y <= ans {
-                    ys_p1_new.push(x * y);
+                if y * x == ans {
+                    is_p2 = true;
+                    if is_p1 {
+                        return (ans, ans);
+                    }
+                }
+
+                if poor_mans_concat(y, x) == ans {
+                    is_p2 = true;
                 }
             }
 
-            for y in ys_p2 {
-                if x + y <= ans {
-                    ys_p2_new.push(x + y);
-                }
-
-                if x * y <= ans {
-                    ys_p2_new.push(x * y);
-                }
-
-                let concat = y * 10i64.pow(x.ilog10() + 1) + x;
-                if concat <= ans {
-                    ys_p2_new.push(concat);
-                }
+            if is_p2 {
+                return (0, ans);
             }
 
-            ys_p1 = ys_p1_new;
-            ys_p2 = ys_p2_new;
-        }
+            (0, 0)
+        })
+        .reduce(|| (0, 0), |(p1, p2), (q1, q2)| (p1 + q1, p2 + q2))
+}
 
-        if ys_p1.into_iter().any(|x| x == ans) {
-            p1 += ans;
-            p2 += ans;
-            continue;
-        }
-
-        if ys_p2.into_iter().any(|x| x == ans) {
-            p2 += ans;
-        }
+#[inline]
+fn poor_mans_concat(a: i64, b: i64) -> i64 {
+    if b < 10 {
+        a * 10 + b
+    } else if b < 100 {
+        a * 100 + b
+    } else if b < 1000 {
+        a * 1000 + b
+    } else {
+        unimplemented!("add as necessary");
     }
-
-    (p1, p2)
 }
 
 fn main() {
