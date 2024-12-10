@@ -1,104 +1,78 @@
-use std::collections::BTreeMap;
-
 use itertools::Itertools;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
+use std::hint::black_box;
 
-const IN: &str = include_str!("day10.txt");
+const IN: &[u8] = include_bytes!("day10.txt");
 
-fn run(input: &str) -> (usize, usize) {
-    let grid: BTreeMap<(i64, i64), u32> = input
-        .lines()
-        .enumerate()
-        .flat_map(|(r, l)| {
-            l.chars()
-                .enumerate()
-                .filter_map(move |(c, h)| h.to_digit(10).map(|h| ((r as i64, c as i64), h)))
-        })
-        .collect();
-
+fn run(input: &[u8]) -> (usize, usize) {
     let (mut p1, mut p2) = (0, 0);
-    for start in grid.iter().filter(|(_, &h)| h == 0).map(|(p, _)| *p) {
-        let trails: FxHashSet<_> = paths(&grid, start).into_iter().collect();
-        let peaks: FxHashSet<_> = trails.iter().map(|p| p[0]).collect();
+    let grid: Vec<u8> = input
+        .trim_ascii()
+        .iter()
+        .filter(|&b| b.is_ascii_digit())
+        .map(|b| b - b'0')
+        .collect();
+    let width = input.iter().position(|&x| x == b'\n').unwrap();
+    let height = grid.len() / width;
 
-        p1 += peaks.len();
-        p2 += trails.len();
+    let mut q = vec![];
+    let mut peaks = FxHashSet::default();
+
+    for start in grid.iter().positions(|&x| x == 0) {
+        q.push((start, 0));
+
+        while let Some((p, h)) = q.pop() {
+            let (r, c) = (p / width, p % width);
+            let nb4 = [
+                (r > 0).then_some((r - 1) * width + c),
+                (r < height - 1).then_some((r + 1) * width + c),
+                (c > 0).then_some(p - 1),
+                (c < width - 1).then_some(p + 1),
+            ]
+            .into_iter()
+            .flatten();
+
+            for next in nb4 {
+                let next_h = grid[next];
+
+                if next_h != h + 1 {
+                    continue;
+                }
+
+                if next_h == 9 {
+                    peaks.insert(next).then(|| p1 += 1);
+                    p2 += 1;
+                } else {
+                    q.push((next, next_h));
+                }
+            }
+        }
+
+        q.clear();
+        peaks.clear();
     }
 
     (p1, p2)
 }
 
-fn paths(grid: &BTreeMap<(i64, i64), u32>, start: (i64, i64)) -> Vec<Vec<(i64, i64)>> {
-    let mut prev: FxHashMap<(i64, i64), FxHashSet<(i64, i64)>> = FxHashMap::default();
-    let mut paths = vec![];
-    let mut q = vec![start];
-
-    while let Some(p) = q.pop() {
-        let prev_h = *grid.get(&p).unwrap();
-
-        for next in nb4(p) {
-            let Some(&next_h) = grid.get(&next) else {
-                continue;
-            };
-
-            if next_h < prev_h || next_h - prev_h != 1 {
-                continue;
-            }
-
-            prev.entry(next).or_default().insert(p);
-
-            if next_h == 9 {
-                paths.extend(reverse(vec![next], &prev));
-            }
-
-            q.push(next);
-        }
-    }
-
-    paths
-}
-
-fn reverse(
-    path: Vec<(i64, i64)>,
-    prev: &FxHashMap<(i64, i64), FxHashSet<(i64, i64)>>,
-) -> Vec<Vec<(i64, i64)>> {
-    let Some(next) = prev.get(path.last().unwrap()) else {
-        return vec![path];
-    };
-
-    let mut paths = vec![];
-    for node in next {
-        paths.extend(reverse(path.iter().chain([node]).cloned().collect(), prev));
-    }
-
-    paths
-}
-
-fn nb4(p: (i64, i64)) -> Vec<(i64, i64)> {
-    vec![
-        (p.0 - 1, p.1),
-        (p.0 + 1, p.1),
-        (p.0, p.1 - 1),
-        (p.0, p.1 + 1),
-    ]
-}
-
 fn main() {
-    let now = std::time::Instant::now();
     let (p1, p2) = run(IN);
-    let elapsed = now.elapsed();
-
     println!("Day 01\n======");
     println!("Part 1: {p1}");
     println!("Part 2: {p2}");
-    println!("{}µs\n", elapsed.as_micros());
+
+    let now = std::time::Instant::now();
+    for _ in 0..10000 {
+        black_box(run(IN));
+    }
+    println!("{}ns\n", now.elapsed().as_nanos() / 10000);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const T1: &str = r"89010123
+    const T1: &[u8] = b"89010123
 78121874
 87430965
 96549874
@@ -110,5 +84,6 @@ mod tests {
     #[test]
     fn test() {
         assert_eq!(run(T1), (36, 81));
+        assert_eq!(run(IN), (430, 928));
     }
 }
