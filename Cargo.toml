@@ -1,5 +1,5 @@
 [package]
-name = "advent-of-code-2024"
+name = "aoc"
 edition = "2021"
 
 [dependencies]
