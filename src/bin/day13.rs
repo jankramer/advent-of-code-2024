@@ -14,22 +14,22 @@ fn run(input: &str) -> (i64, i64) {
         .collect();
 
     for (ax, ay, bx, by, x, y) in machines {
-        p1 += solve(ax, ay, bx, by, x, y).unwrap_or_default();
-        p2 += solve(ax, ay, bx, by, x + 10000000000000, y + 10000000000000).unwrap_or_default();
+        p1 += solve(ax, ay, bx, by, x, y);
+        p2 += solve(ax, ay, bx, by, x + 10000000000000, y + 10000000000000);
     }
 
     (p1, p2)
 }
 
-fn solve(ax: i64, ay: i64, bx: i64, by: i64, x: i64, y: i64) -> Option<i64> {
-    if (y * ax - x * ay) % (ax * by - bx * ay) != 0 {
-        return None;
-    }
-
+fn solve(ax: i64, ay: i64, bx: i64, by: i64, x: i64, y: i64) -> i64 {
     let b = (y * ax - x * ay) / (ax * by - bx * ay);
     let a = (x - bx * b) / ax;
 
-    Some(a * 3 + b)
+    if a * ax + b * bx != x || a * ay + b * by != y {
+        return 0;
+    }
+
+    a * 3 + b
 }
 
 fn main() {
