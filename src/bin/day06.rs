@@ -84,10 +84,10 @@ fn walk_grid(
     let width = cols.len();
     loop {
         let next = match dir {
-            Heading::N => cols[pos.1].iter().rev().skip_while(|&&r| r > pos.0).next(),
-            Heading::S => cols[pos.1].iter().skip_while(|&&r| r < pos.0).next(),
-            Heading::E => rows[pos.0].iter().skip_while(|&&c| c < pos.1).next(),
-            Heading::W => rows[pos.0].iter().rev().skip_while(|&&c| c > pos.1).next(),
+            Heading::N => cols[pos.1].iter().rev().find(|&&r| r < pos.0),
+            Heading::S => cols[pos.1].iter().find(|&&r| r > pos.0),
+            Heading::E => rows[pos.0].iter().find(|&&c| c > pos.1),
+            Heading::W => rows[pos.0].iter().rev().find(|&&c| c < pos.1),
         }
         .copied();
 

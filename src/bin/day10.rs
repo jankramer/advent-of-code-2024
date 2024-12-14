@@ -24,9 +24,9 @@ fn run(input: &[u8]) -> (usize, usize) {
         while let Some((p, h)) = q.pop() {
             let (r, c) = (p / width, p % width);
             let nb4 = [
-                (r > 0).then_some((r - 1) * width + c),
+                (r > 0).then(|| (r - 1) * width + c),
                 (r < height - 1).then_some((r + 1) * width + c),
-                (c > 0).then_some(p - 1),
+                (c > 0).then(|| p - 1),
                 (c < width - 1).then_some(p + 1),
             ]
             .into_iter()

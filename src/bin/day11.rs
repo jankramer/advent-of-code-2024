@@ -3,13 +3,12 @@ use rustc_hash::FxHashMap;
 const IN: &str = include_str!("day11.txt");
 
 fn run(input: &str) -> (usize, usize) {
-    let (mut p1, mut p2) = (0, 0);
-
     let mut numbers: FxHashMap<usize, usize> = input
         .split_whitespace()
         .map(|x| (x.parse().unwrap(), 1))
         .collect();
 
+    let mut p1 = 0;
     for i in 0..75 {
         if i == 25 {
             p1 = numbers.values().sum();

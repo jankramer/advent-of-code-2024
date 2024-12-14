@@ -16,9 +16,9 @@ fn run(input: &[u8]) -> (usize, usize) {
     let mut p1 = vec![false; (width * height + 1) as usize];
     let mut p2 = vec![false; (width * height + 1) as usize];
 
-    let insert = |foo: &mut Vec<bool>, p: &(i64, i64)| {
+    let insert = |bitmap: &mut Vec<bool>, p: &(i64, i64)| {
         if p.0 >= 0 && p.1 >= 0 && p.0 < height && p.1 < width {
-            foo[(p.1 + p.0 * width) as usize] = true;
+            bitmap[(p.1 + p.0 * width) as usize] = true;
             true
         } else {
             false
