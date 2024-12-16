@@ -1,20 +1,16 @@
 use std::cmp::Ordering;
 
+use aoc::input::Input;
+use aoc::vector::{StateVec, Vec2};
 use itertools::Itertools;
-use regex::Regex;
 use rustc_hash::FxHashSet;
 
-use aoc::vector::{StateVec, Vec2};
-
-const IN: &str = include_str!("day14.txt");
+const IN: Input = Input::new(include_str!("day14.txt"));
 const THRESHOLD: usize = 50;
 
-fn run(input: &str, grid_size: Vec2) -> (usize, usize) {
-    let regex = Regex::new(r#"-?\d+"#).unwrap();
-
-    let robots: Vec<StateVec> = regex
-        .find_iter(input)
-        .map(|x| x.as_str().parse::<i64>().unwrap())
+fn run(input: Input, grid_size: Vec2) -> (usize, usize) {
+    let robots: Vec<StateVec> = input
+        .numbers()
         .tuples()
         .map(|(x, y, dx, dy)| StateVec::new(Vec2(x, y), Vec2(dx, dy)))
         .collect();

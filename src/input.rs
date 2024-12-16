@@ -1,12 +1,22 @@
 use crate::grid::Grid;
 use crate::vector::Vec2;
+use regex::Regex;
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 pub struct Input<'a>(&'a str);
+
+static NUM_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"-?\d+").unwrap());
 
 impl<'a> Input<'a> {
     pub const fn new(input: &'a str) -> Input<'a> {
         Self(input)
+    }
+
+    pub fn numbers(&self) -> impl Iterator<Item = i64> + '_ {
+        NUM_REGEX
+            .find_iter(self)
+            .map(|m| m.as_str().parse().unwrap())
     }
 
     pub fn split_once(&self, delimiter: &'static str) -> (Input, Input) {

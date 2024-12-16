@@ -1,19 +1,12 @@
+use aoc::input::Input;
 use itertools::Itertools;
-use regex::Regex;
 
-const IN: &str = include_str!("day13.txt");
+const IN: Input = Input::new(include_str!("day13.txt"));
 
-fn run(input: &str) -> (i64, i64) {
+fn run(input: Input) -> (i64, i64) {
     let (mut p1, mut p2) = (0, 0);
 
-    let machines: Vec<_> = Regex::new(r#"\d+"#)
-        .unwrap()
-        .find_iter(input)
-        .map(|x| x.as_str().parse::<i64>().unwrap())
-        .tuples()
-        .collect();
-
-    for (ax, ay, bx, by, x, y) in machines {
+    for (ax, ay, bx, by, x, y) in input.numbers().tuples() {
         p1 += solve(ax, ay, bx, by, x, y);
         p2 += solve(ax, ay, bx, by, x + 10000000000000, y + 10000000000000);
     }
@@ -47,7 +40,8 @@ fn main() {
 mod tests {
     use super::*;
 
-    const T1: &str = r#"Button A: X+94, Y+34
+    const T1: Input = Input::new(
+        r#"Button A: X+94, Y+34
 Button B: X+22, Y+67
 Prize: X=8400, Y=5400
 
@@ -61,7 +55,8 @@ Prize: X=7870, Y=6450
 
 Button A: X+69, Y+23
 Button B: X+27, Y+71
-Prize: X=18641, Y=10279"#;
+Prize: X=18641, Y=10279"#,
+    );
 
     #[test]
     fn test() {
