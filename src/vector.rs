@@ -96,6 +96,7 @@ impl Rem<&Vec2> for Vec2 {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct StateVec {
     pub r: Vec2,
     pub v: Vec2,
@@ -108,6 +109,18 @@ impl StateVec {
 
     pub fn at_time(&self, t: i64) -> Vec2 {
         self.r + t * self.v
+    }
+
+    pub fn step(&self, t: i64) -> Self {
+        Self::new(self.at_time(t), self.v)
+    }
+
+    pub fn rotate_left(&self) -> Self {
+        Self::new(self.r, Vec2(-self.v.1, self.v.0))
+    }
+
+    pub fn rotate_right(&self) -> Self {
+        Self::new(self.r, Vec2(self.v.1, -self.v.0))
     }
 }
 
