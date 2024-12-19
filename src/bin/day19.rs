@@ -9,39 +9,35 @@ fn run(input: Input) -> (usize, usize) {
     let (left, designs) = input.split_once("\n\n");
     let patterns: Vec<_> = left.split(", ").collect();
 
+    let mut cache = FxHashMap::default();
     for design in designs.lines() {
-        let mut counts: FxHashMap<usize, usize> = FxHashMap::default();
-        for prefix in patterns.iter().filter(|&pat| design.starts_with(pat)) {
-            *counts.entry(prefix.len()).or_default() += 1;
+        let n = count(&mut cache, &patterns, design);
+        if n > 0 {
+            p1 += 1;
+            p2 += n;
         }
-
-        if counts.is_empty() {
-            continue;
-        }
-
-        for i in *counts.keys().min().unwrap()..design.len() {
-            let Some(&count) = counts.get(&i) else {
-                continue;
-            };
-
-            for &pattern in &patterns {
-                if (i + pattern.len()) > design.len() || &design[i..i + pattern.len()] != pattern {
-                    continue;
-                }
-
-                *counts.entry(i + pattern.len()).or_default() += count;
-            }
-        }
-
-        let Some(count) = counts.get(&design.len()) else {
-            continue;
-        };
-
-        p1 += 1;
-        p2 += count;
     }
 
     (p1, p2)
+}
+
+fn count<'a>(cache: &mut FxHashMap<&'a str, usize>, patterns: &[&str], tail: &'a str) -> usize {
+    if tail.is_empty() {
+        return 1;
+    }
+
+    if cache.contains_key(tail) {
+        return cache[tail];
+    }
+
+    let n = patterns
+        .iter()
+        .filter(|&&p| tail.starts_with(p))
+        .map(|&p| count(cache, patterns, &tail[p.len()..]))
+        .sum();
+
+    cache.insert(tail, n);
+    n
 }
 
 fn main() {
