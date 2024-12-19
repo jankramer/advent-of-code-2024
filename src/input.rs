@@ -1,5 +1,6 @@
 use crate::grid::Grid;
 use crate::vector::Vec2;
+use itertools::Itertools;
 use regex::Regex;
 use std::ops::Deref;
 use std::sync::LazyLock;
@@ -17,6 +18,10 @@ impl<'a> Input<'a> {
         NUM_REGEX
             .find_iter(self)
             .map(|m| m.as_str().parse().unwrap())
+    }
+
+    pub fn vecs(&self) -> impl Iterator<Item = Vec2> + '_ {
+        self.numbers().tuples().map(|(x, y)| Vec2(x, y))
     }
 
     pub fn split_once(&self, delimiter: &'static str) -> (Input, Input) {

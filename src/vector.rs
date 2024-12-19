@@ -32,6 +32,12 @@ impl Vec2 {
     }
 }
 
+impl From<(i64, i64)> for Vec2 {
+    fn from((x, y): (i64, i64)) -> Self {
+        Vec2(x, y)
+    }
+}
+
 impl Add for Vec2 {
     type Output = Vec2;
 
