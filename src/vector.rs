@@ -30,6 +30,10 @@ impl Vec2 {
             .iter()
             .map(move |h| self + h)
     }
+
+    pub fn taxicab(&self, rhs: &Vec2) -> i64 {
+        (rhs.0 - self.0).abs() + (rhs.1 - self.1).abs()
+    }
 }
 
 impl From<(i64, i64)> for Vec2 {

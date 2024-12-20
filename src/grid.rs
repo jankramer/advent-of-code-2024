@@ -38,6 +38,10 @@ impl<T> Grid<T> {
         self.data = self.data.into_iter().chain(data).collect();
         self
     }
+
+    pub fn nb4<'a>(&'a self, pos: &'a Vec2) -> impl Iterator<Item = (&'a Vec2, &'a T)> {
+        pos.nb4().filter_map(|p| self.data.get_key_value(&p))
+    }
 }
 
 impl<T: Eq> Grid<T> {
