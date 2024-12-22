@@ -1,10 +1,12 @@
 use aoc::input::Input;
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::cmp::Ordering;
 use std::collections::VecDeque;
 
 const IN: Input = Input::new(include_str!("day21.txt"));
+
+type Cache = FxHashMap<(char, char, usize), usize>;
+type Neighbors = FxHashMap<char, Vec<(char, char)>>;
 
 fn run(input: Input) -> (usize, usize) {
     let (mut p1, mut p2) = (0, 0);
@@ -31,163 +33,100 @@ fn run(input: Input) -> (usize, usize) {
         ('>', vec![('<', 'v'), ('^', 'A')]),
     ]);
 
-    let paths_num: FxHashMap<(char, char), Vec<Path>> = Path::build_lookup(nbs_num);
-    let paths_dir: FxHashMap<(char, char), Vec<Path>> = Path::build_lookup(nbs_dir);
-
     for line in input.lines() {
         let code = line.trim_end_matches('A').parse::<usize>().unwrap();
-        let path: Path = line.chars().collect::<Vec<_>>().into();
-
-        let paths = path.expand(&paths_num);
-        let mut paths: Vec<Path> = paths.into_iter().map_into().collect();
-
-        for i in 0..25 {
-            let mut new_paths = vec![];
-            for path in paths {
-                new_paths.extend(path.expand(&paths_dir));
-            }
-
-            new_paths.sort();
-            new_paths.truncate(100);
-
-            paths = new_paths;
-
-            if i == 1 {
-                p1 += code * paths.iter().map(|p| p.len()).min().unwrap();
-            }
-        }
-
-        p2 += code * paths.iter().map(|p| p.len()).min().unwrap();
+        p1 += code * count(&nbs_num, &nbs_dir, line, 2);
+        p2 += code * count(&nbs_num, &nbs_dir, line, 25);
     }
 
     (p1, p2)
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
-struct Path {
-    counts: FxHashMap<(char, char), usize>,
+fn count(num_graph: &Neighbors, dir_graph: &Neighbors, input: &str, depth: usize) -> usize {
+    let mut cache = FxHashMap::default();
+    let mut sum = 0;
+    for (a, b) in format!("A{input}").chars().tuple_windows() {
+        sum += count_inner(&mut cache, num_graph, dir_graph, depth, a, b, 0);
+    }
+
+    sum
 }
 
-impl Path {
-    fn build_lookup(
-        neighbors: FxHashMap<char, Vec<(char, char)>>,
-    ) -> FxHashMap<(char, char), Vec<Self>> {
-        neighbors
-            .keys()
-            .flat_map(|&start| paths(&neighbors, start))
-            .map(|(k, v)| (k, v.into_iter().map_into().collect()))
-            .collect()
+fn count_inner(
+    cache: &mut Cache,
+    nbs_num: &Neighbors,
+    nbs_dir: &Neighbors,
+    max_depth: usize,
+    from: char,
+    to: char,
+    depth: usize,
+) -> usize {
+    if cache.contains_key(&(from, to, depth)) {
+        return cache[&(from, to, depth)];
     }
 
-    fn len(&self) -> usize {
-        self.counts.values().sum()
-    }
+    let nbs = if depth == 0 { nbs_num } else { nbs_dir };
 
-    fn num_same(&self) -> usize {
-        self.counts
+    if depth == max_depth {
+        return all_shortest_paths(nbs, from, to)
             .iter()
-            .filter_map(|((a, b), c)| (a == b).then_some(*c))
-            .sum()
+            .map(|p| p.len())
+            .min()
+            .unwrap();
     }
 
-    fn expand(self, lookup: &FxHashMap<(char, char), Vec<Path>>) -> Vec<Self> {
-        let mut result: Vec<Self> = vec![Default::default()];
+    let mut min_length = usize::MAX;
+    for path in all_shortest_paths(nbs, from, to) {
+        let current = [&'A']
+            .into_iter()
+            .chain(path.iter())
+            .tuple_windows()
+            .map(|(&a, &b)| count_inner(cache, nbs_num, nbs_dir, max_depth, a, b, depth + 1))
+            .sum();
 
-        for (pair, count) in self.counts {
-            let mut new_result = vec![];
-            for new_path in &lookup[&pair] {
-                for current in &result {
-                    new_result.push(current.merge(new_path, count));
-                }
-            }
-            result = new_result;
+        if current < min_length {
+            min_length = current;
         }
-
-        result
     }
 
-    fn merge(&self, other: &Path, multiplier: usize) -> Self {
-        let mut counts = self.counts.clone();
-        for (pair, count) in other.counts.iter() {
-            *counts.entry(*pair).or_default() += count * multiplier;
-        }
+    cache.insert((from, to, depth), min_length);
 
-        Self { counts }
-    }
+    min_length
 }
 
-impl From<Vec<char>> for Path {
-    fn from(value: Vec<char>) -> Self {
-        let mut counts = FxHashMap::default();
-        for (a, b) in ['A'].into_iter().chain(value.into_iter()).tuple_windows() {
-            *counts.entry((a, b)).or_default() += 1;
-        }
-
-        Self { counts }
-    }
-}
-
-impl PartialOrd for Path {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Path {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.len()
-            .cmp(&other.len())
-            .then_with(|| self.num_same().cmp(&other.num_same()).reverse())
-    }
-}
-
-fn paths(
+fn all_shortest_paths(
     nbs: &FxHashMap<char, Vec<(char, char)>>,
-    start: char,
-) -> FxHashMap<(char, char), Vec<Vec<char>>> {
-    let mut dist: FxHashMap<char, usize> = FxHashMap::default();
-    let mut prev: FxHashMap<char, FxHashSet<(char, char)>> = Default::default();
-    let mut q = VecDeque::from([(start, 0)]);
-    while let Some((current, curr_dist)) = q.pop_front() {
-        for &(key, val) in nbs.get(&current).unwrap() {
-            if curr_dist > dist.get(&val).copied().unwrap_or(usize::MAX) {
+    from: char,
+    to: char,
+) -> Vec<Vec<char>> {
+    if from == to {
+        return vec![vec!['A']];
+    }
+
+    let mut queue = VecDeque::from([(from, vec![])]);
+    let mut seen: FxHashSet<(char, char)> = FxHashSet::default();
+    let mut paths = vec![];
+
+    while let Some((current, mut path)) = queue.pop_front() {
+        if current == to {
+            path.push('A');
+            paths.push(path);
+            continue;
+        }
+
+        for &(key, val) in &nbs[&current] {
+            if val != to && !seen.insert((current, val)) {
                 continue;
             }
 
-            prev.entry(val).or_default().insert((key, current));
-            dist.insert(val, curr_dist + 1);
-            q.push_back((val, curr_dist + 1));
-        }
-    }
-
-    nbs.keys()
-        .map(|&end| {
-            let mut paths = reverse(&prev, start, end);
-            for path in paths.iter_mut() {
-                path.push('A');
-            }
-
-            ((start, end), paths)
-        })
-        .collect()
-}
-
-fn reverse(
-    prev: &FxHashMap<char, FxHashSet<(char, char)>>,
-    start: char,
-    end: char,
-) -> Vec<Vec<char>> {
-    if start == end {
-        return vec![vec![]];
-    }
-
-    let mut paths = vec![];
-    for &(key, val) in prev.get(&end).unwrap() {
-        for mut path in reverse(prev, start, val) {
+            let mut path = path.clone();
             path.push(key);
-            paths.push(path);
+            queue.push_back((val, path));
         }
     }
+
+    let min_length = paths.iter().map(|p| p.len()).min().unwrap();
+    paths.retain(|p| p.len() == min_length);
 
     paths
 }
@@ -219,10 +158,9 @@ mod tests {
     fn test() {
         let test_input_result = run(T1);
         assert_eq!(test_input_result.0, 126384);
-        // assert_eq!(test_input_result.1, 0);
 
-        // let real_input_result = run(IN);
-        // assert_eq!(real_input_result.0, 0);
-        // assert_eq!(real_input_result.1, 0);
+        let real_input_result = run(IN);
+        assert_eq!(real_input_result.0, 136780);
+        assert_eq!(real_input_result.1, 167538833832712);
     }
 }
