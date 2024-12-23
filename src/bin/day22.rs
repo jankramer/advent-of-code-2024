@@ -9,12 +9,12 @@ fn run(input: Input) -> (i64, i64) {
 
     let mut prizes = FxHashMap::<(i64, i64, i64, i64), i64>::default();
     for num in input.numbers() {
-        let mut last_digits = vec![last_digit(num)];
+        let mut last_digits = vec![num % 10];
         let mut num = num;
 
         for _ in 0..2000 {
             num = step(num);
-            last_digits.push(last_digit(num));
+            last_digits.push(num % 10);
         }
 
         p1 += num;
@@ -41,15 +41,6 @@ fn run(input: Input) -> (i64, i64) {
     (p1, p2)
 }
 
-fn last_digit(num: i64) -> i64 {
-    let mut num = num;
-    while num >= 10 {
-        num -= 10i64.pow(num.ilog10());
-    }
-
-    num
-}
-
 fn main() {
     let now = std::time::Instant::now();
     let (p1, p2) = run(IN);
@@ -61,7 +52,6 @@ fn main() {
     println!("{}µs\n", elapsed.as_micros());
 }
 
-#[inline]
 fn step(num: i64) -> i64 {
     let num = ((num * 64) ^ num) % 16777216;
     let num = ((num / 32) ^ num) % 16777216;

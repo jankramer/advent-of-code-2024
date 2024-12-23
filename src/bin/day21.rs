@@ -1,6 +1,6 @@
 use aoc::input::Input;
 use itertools::Itertools;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use std::collections::VecDeque;
 
 const IN: Input = Input::new(include_str!("day21.txt"));
@@ -104,29 +104,28 @@ fn all_shortest_paths(
     }
 
     let mut queue = VecDeque::from([(from, vec![])]);
-    let mut seen: FxHashSet<(char, char)> = FxHashSet::default();
     let mut paths = vec![];
+    let mut min_length = usize::MAX;
 
-    while let Some((current, mut path)) = queue.pop_front() {
-        if current == to {
-            path.push('A');
-            paths.push(path);
+    while let Some((current, path)) = queue.pop_front() {
+        if path.len() + 2 > min_length {
             continue;
         }
 
         for &(key, val) in &nbs[&current] {
-            if val != to && !seen.insert((current, val)) {
+            let mut path = path.clone();
+
+            if val == to {
+                path.extend([key, 'A']);
+                min_length = path.len();
+                paths.push(path);
                 continue;
             }
 
-            let mut path = path.clone();
             path.push(key);
             queue.push_back((val, path));
         }
     }
-
-    let min_length = paths.iter().map(|p| p.len()).min().unwrap();
-    paths.retain(|p| p.len() == min_length);
 
     paths
 }
@@ -136,7 +135,7 @@ fn main() {
     let (p1, p2) = run(IN);
     let elapsed = now.elapsed();
 
-    println!("Day 01\n======");
+    println!("Day 21\n======");
     println!("Part 1: {p1}");
     println!("Part 2: {p2}");
     println!("{}µs\n", elapsed.as_micros());
